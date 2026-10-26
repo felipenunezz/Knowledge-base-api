@@ -1,0 +1,15 @@
+{
+  "name": "knowledge-base",
+  "version": "0.1.0",
+  "dependencies": [
+    {
+      "name": "drogon",
+      "features": [
+        "postgres",
+        "orm"
+      ]
+    },
+    "nlohmann-json",
+    "gtest"
+  ]
+}
