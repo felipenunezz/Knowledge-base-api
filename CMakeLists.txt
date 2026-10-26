@@ -13,7 +13,7 @@ find_package(GTest CONFIG REQUIRED)
 
 enable_testing()
 
-add_subdirectory(libs/kb-domain)
-add_subdirectory(libs/kb-storage)
+add_subdirectory(libs)
+add_subdirectory(migrations)
 add_subdirectory(apps/knowledge-base-service)
 add_subdirectory(tests)
