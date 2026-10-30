@@ -1,39 +1,64 @@
-#dont commit this file.
 services:
-  postgres:
-    image: postgres:16-alpine
+  db:
+    image: postgres:18
     container_name: kb-postgres
     environment:
-      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kb_user} -d ${POSTGRES_DB:-knowledge_base}"]
       interval: 5s
-      timeout: 3s
-      retries: 10
+      timeout: 5s
+      retries: 5
+
+  flyway:
+    image: flyway/flyway:13-alpine
+    container_name: kb-flyway
+    command: >
+      -url=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      -user=${POSTGRES_USER}
+      -password=${POSTGRES_PASSWORD}
+      -connectRetries=60
+      migrate
+    volumes:
+      - ./migrations:/flyway/sql
+    depends_on:
+      db:
+        condition: service_healthy
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: kb-service
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
-      POSTGRES_HOST:     postgres
-      POSTGRES_PORT:     "5432"
-      POSTGRES_DB:       ${POSTGRES_DB}
-      POSTGRES_USER:     ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      HTTP_PORT:         "8080"
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - SESSION_LIFETIME_HOURS=24
+      - LOG_LEVEL=INFO
+      - PORT=8080
+      - STORAGE_BASE_PATH=/app/storage
+      - MAX_FILE_SIZE_MB=50
     ports:
       - "8080:8080"
+    volumes:
+      - app_storage:/app/storage
+    depends_on:
+      flyway:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
-  pg_data:
+  pgdata:
+  app_storage:
