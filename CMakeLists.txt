@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3)
+cmake_minimum_required(VERSION 4.0)
 
 project(knowledge-base LANGUAGES CXX)
 
@@ -17,3 +17,6 @@ add_subdirectory(libs)
 add_subdirectory(migrations)
 add_subdirectory(apps/knowledge-base-service)
 add_subdirectory(tests)
+
+#TODO: fix compilation, my version of it doesnt work and i dont have the ones from my colleagues.
+#TODO: Dockerfile is not right either. its giving me wierd errors, and im not really good Docker so its taking its sweet time
